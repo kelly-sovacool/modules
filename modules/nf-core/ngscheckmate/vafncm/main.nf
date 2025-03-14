@@ -1,10 +1,10 @@
 process NGSCHECKMATE_VAFNCM {
     label 'process_single'
 
-    conda "bioconda::ngscheckmate=1.0.1"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/ngscheckmate:1.0.1--py27pl5321r40hdfd78af_1' :
-        'biocontainers/ngscheckmate:1.0.1--py27pl5321r40hdfd78af_1' }"
+        'https://depot.galaxyproject.org/singularity/ngscheckmate:1.0.1--py312pl5321h577a1d6_4':
+        'biocontainers/ngscheckmate:1.0.1--py312pl5321h577a1d6_4' }"
 
     input:
     tuple val(meta), path(vafs)
@@ -28,7 +28,7 @@ process NGSCHECKMATE_VAFNCM {
     cp ${vafs[0]} zzzzzz.vaf
     vaf_ncm.py -I . -O . -N ${prefix} $args
 
-    # remove the existance of the dummy file
+    # remove the existence of the dummy file
     rm zzzzzz.vaf
     sed -i.bak "/zzzzzz/d" ${prefix}_all.txt
 
@@ -43,6 +43,7 @@ process NGSCHECKMATE_VAFNCM {
 
     stub:
     def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
     touch ${prefix}_corr_matrix.txt
@@ -52,7 +53,7 @@ process NGSCHECKMATE_VAFNCM {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        : \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+        ngscheckmate: \$(ncm.py --help | sed "7!d;s/ *Ensuring Sample Identity v//g")
     END_VERSIONS
     """
 }

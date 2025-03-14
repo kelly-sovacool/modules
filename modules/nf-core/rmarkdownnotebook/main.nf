@@ -7,7 +7,7 @@ process RMARKDOWNNOTEBOOK {
     //NB: You likely want to override this with a container containing all required
     //dependencies for your analysis. The container at least needs to contain the
     //yaml and rmarkdown R packages.
-    conda "conda-forge::r-base=4.1.0 conda-forge::r-rmarkdown=2.9 conda-forge::r-yaml=2.2.1"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/mulled-v2-31ad840d814d356e5f98030a4ee308a16db64ec5:0e852a1e4063fdcbe3f254ac2c7469747a60e361-0' :
         'biocontainers/mulled-v2-31ad840d814d356e5f98030a4ee308a16db64ec5:0e852a1e4063fdcbe3f254ac2c7469747a60e361-0' }"
@@ -20,8 +20,8 @@ process RMARKDOWNNOTEBOOK {
     output:
     tuple val(meta), path("*.html")              , emit: report
     tuple val(meta), path("*.parameterised.Rmd") , emit: parameterised_notebook, optional: true
-    tuple val(meta), path ("artifacts/*")        , emit: artifacts, optional: true
-    tuple val(meta), path ("session_info.log")   , emit: session_info
+    tuple val(meta), path("artifacts/*")         , emit: artifacts, optional: true
+    tuple val(meta), path("session_info.log")    , emit: session_info
     path  "versions.yml"                         , emit: versions
 
     when:
@@ -126,6 +126,18 @@ process RMARKDOWNNOTEBOOK {
         ${indent_code_block(render_cmd, 8)}
         writeLines(capture.output(sessionInfo()), "session_info.log")
     EOF
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        rmarkdown: \$(Rscript -e "cat(paste(packageVersion('rmarkdown'), collapse='.'))")
+    END_VERSIONS
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.html
+    touch session_info.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

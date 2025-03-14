@@ -1,8 +1,10 @@
 process BWAMEM2_INDEX {
     tag "$fasta"
-    label 'process_single'
+    // NOTE Requires 28N GB memory where N is the size of the reference sequence
+    // source: https://github.com/bwa-mem2/bwa-mem2/issues/9
+    memory { 28.B * fasta.size() }
 
-    conda "bioconda::bwa-mem2=2.2.1"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/bwa-mem2:2.2.1--he513fc3_0' :
         'biocontainers/bwa-mem2:2.2.1--he513fc3_0' }"

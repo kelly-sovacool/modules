@@ -2,13 +2,14 @@ process SPRING_DECOMPRESS {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "bioconda::spring=1.1.1"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/spring:1.1.1--h4ac6f70_2' :
         'biocontainers/spring:1.1.1--h4ac6f70_2' }"
 
     input:
     tuple val(meta), path(spring)
+    val(write_one_fastq_gz)
 
     output:
     tuple val(meta), path("*.fastq.gz"), emit: fastq
@@ -21,7 +22,7 @@ process SPRING_DECOMPRESS {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def VERSION = '1.1.1' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    def output = meta.single_end ? "-o ${prefix}.fastq.gz" : "-o ${prefix}_R1.fastq.gz ${prefix}_R2.fastq.gz"
+    def output = write_one_fastq_gz ? "-o ${prefix}.fastq.gz" : "-o ${prefix}_R1.fastq.gz ${prefix}_R2.fastq.gz"
 
     """
     spring \\
@@ -31,6 +32,19 @@ process SPRING_DECOMPRESS {
         $args \\
         -i ${spring} \\
         ${output}
+
+    cat <<-END_VERSIONS > versions.yml
+    "${task.process}":
+        spring: ${VERSION}
+    END_VERSIONS
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def VERSION = '1.1.1' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def output = write_one_fastq_gz ? "echo '' | gzip > ${prefix}.fastq.gz" : "echo '' | gzip > ${prefix}_R1.fastq.gz; echo '' | gzip > ${prefix}_R2.fastq.gz"
+    """
+    ${output}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

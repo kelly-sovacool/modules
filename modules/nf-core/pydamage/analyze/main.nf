@@ -2,7 +2,7 @@ process PYDAMAGE_ANALYZE {
     tag "$meta.id"
     label 'process_medium'
 
-    conda "bioconda::pydamage=0.70"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/pydamage:0.70--pyhdfd78af_0' :
         'biocontainers/pydamage:0.70--pyhdfd78af_0' }"
@@ -11,7 +11,7 @@ process PYDAMAGE_ANALYZE {
     tuple val(meta), path(bam), path(bai)
 
     output:
-    tuple val(meta), path("pydamage_results/pydamage_results.csv"), emit: csv
+    tuple val(meta), path("pydamage_results/*_pydamage_results.csv"), emit: csv
     path "versions.yml"           , emit: versions
 
     when:
@@ -27,9 +27,11 @@ process PYDAMAGE_ANALYZE {
         -p $task.cpus \\
         $bam
 
+    mv pydamage_results/pydamage_results.csv pydamage_results/${prefix}_pydamage_results.csv
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        pydamage: \$(echo \$(pydamage --version 2>&1) | sed -e 's/pydamage, version //g')
+        pydamage: \$(pydamage --version | sed -n 's/pydamage, version \\(.*\\)/\\1/p')
     END_VERSIONS
     """
 }

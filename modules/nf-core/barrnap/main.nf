@@ -2,7 +2,7 @@ process BARRNAP {
     tag "$meta.id"
     label 'process_single'
 
-    conda "bioconda::barrnap=0.9"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/barrnap:0.9--hdfd78af_4':
         'biocontainers/barrnap:0.9--hdfd78af_4' }"
@@ -32,7 +32,7 @@ process BARRNAP {
         --threads $task.cpus \\
         --kingdom $db \\
         $input \\
-        > rrna_${db}.gff
+        > ${prefix}_${db}.gff
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -44,9 +44,9 @@ process BARRNAP {
     stub:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-
+    db = dbname ? "${dbname}" : 'bac'
     """
-    touch ${prefix}.gff
+    touch ${prefix}_${db}.gff
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

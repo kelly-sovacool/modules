@@ -2,7 +2,7 @@ process GFATOOLS_GFA2FA {
     tag "$meta.id"
     label 'process_single'
 
-    conda "bioconda::gfatools=0.5"
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/gfatools:0.5--he4a0461_4':
         'biocontainers/gfatools:0.5--he4a0461_4' }"
@@ -37,7 +37,7 @@ process GFATOOLS_GFA2FA {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.fasta.gz
+    echo | gzip > ${prefix}.fasta.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

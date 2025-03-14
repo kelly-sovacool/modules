@@ -1,33 +1,30 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": ["config:recommended"],
-    "platform": "github",
-    "onboarding": false,
-    "dependencyDashboard": true,
-    "dependencyDashboardTitle": "Renovate Dashboard 🤖",
-    "suppressNotifications": ["prIgnoreNotification"],
-    "rebaseWhen": "conflicted",
-    "reviewers": ["team:maintainers"],
-    "regexManagers": [
-        {
-            "customType": "regex",
-            "description": "Process Conda dependencies",
-            "fileMatch": ["(^|/)main\\.nf$"],
-            "matchStrings": ["\\s+conda\\s+\"(?<registryUrl>\\S+)::(?<depName>\\S+)=(?<currentValue>.*\\-.*)'\"\n"],
-            "datasourceTemplate": "conda"
-        },
-        {
-            "customType": "regex",
-            "description": "Process Containers dependencies",
-            "fileMatch": ["(^|/)main\\.nf$"],
-            "matchStrings": ["\\s+'(?<depName>\\S+):(?<currentValue>.*\\-.*)' }\"\n"],
-            "datasourceTemplate": "docker"
-        }
+    "extends": [
+        "github>nf-core/ops//.github/renovate/default.json5",
+        "github>nf-core/ops//.github/renovate/process_updaters.json5"
     ],
+    "prHeader": "## WARNING\n - [ ] I have made sure to update the singularity and conda images",
     "packageRules": [
         {
-            "matchDatasources": ["docker"],
-            "registryUrls": ["quay.io", "registry.hub.docker.com"]
+            "matchDatasources": [
+                "conda",
+                "pypi",
+                "docker"
+            ],
+            "automerge": false
         }
-    ]
+    ],
+        "customManagers": [
+            {
+                "customType": "regex",
+                "fileMatch": [
+                    "(^|/)(workflow-templates|\\.(?:github|gitea|forgejo)/(?:workflows|actions))/.+\\.ya?ml$",
+                    "(^|/)action\\.ya?ml$"
+                ],
+                "matchStrings": [
+                    "# renovate: datasource=(?<datasource>[a-z-.]+?) depName=(?<depName>[^\\s]+?)(?: (?:lookupName|packageName)=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?\\s+[A-Za-z0-9_]+?_VER(SION)?\\s*:\\s*[\"']?(?<currentValue>.+?)[\"']?\\s"
+                ]
+            }
+        ]
 }
